@@ -1,9 +1,9 @@
 # FireQL
-Go library and interactive CLI tool to query Google Firestore resources using SQL syntax.
+Go library and interactive CLI to query Google Firestore resources using SQL syntax.
 
 ## Usage
 
-`FireQL` available as Go library and interactive command-line tool.
+`FireQL` can be used Go library or interactive command-line tool.
 
 ### Go Library
 An example of querying collections using SQL syntax:
@@ -13,8 +13,12 @@ import (
 )
 
 func main() {
-    query, _ := fireql.NewFireQL("GCP_PROJECT_ID")
-    result, err := query.Execute("Select Id, Email, FullName as Name, `Address.City` as City from users LIMIT 10")
+    query, err := fireql.NewFireQL("GCP_PROJECT_ID")
+    if err != nil {
+        panic(err)
+    }
+    result, err := query.
+        Execute("Select Email, FullName as Name, `Address.City` as City from users LIMIT 10")
     if err != nil {
         panic(err)
     }
@@ -28,6 +32,16 @@ Replace `GCP_PROJECT_ID` with your Google ProjectId.
 ## Installation
 
 ### Go
+
+First, use `go get` to install the latest version of the library.
+```bash
+go get -u github.com/spf13/cobra@latest
+
+```
+Next, include `FireQL` in your application:
+```go
+import "github.com/pgollangi/fireql"
+```
 
 ### Homebrew
 
@@ -48,7 +62,7 @@ In additional to that:
 - No support of `GROUP BY` and aggregate function `COUNT`.
 - 
 
-## Roadmap
+## Future plans
 - Expand support all logical conditions in `WHERE` clause by internally issuing multiple query requests to Firestore and merge results locally before returning.
 - `GROUP BY` support
 - Support other DML queries
@@ -56,9 +70,10 @@ In additional to that:
 ## Contributing
 Thanks for considering contributing to this project!
 
-Please read the Contributions and Code of conduct.
+Please read the [Contributions](https://github.com/pgollangi/.github/blob/main/CONTRIBUTING.md) and [Code of conduct](https://github.com/pgollangi/.github/blob/main/CODE_OF_CONDUCT.md).
 
 Feel free to open an issue or submit a pull request!
+
 ## Licence
 
-`FireQL` is open-sourced software licensed under the [MIT](LICENCE) license.
+`FireQL` is open-sourced software licensed under the [MIT](LICENSE) license.

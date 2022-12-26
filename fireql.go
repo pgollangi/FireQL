@@ -16,6 +16,7 @@ type FireQL struct {
 }
 
 type QueryResult struct {
+	Fields  []string
 	Records []map[string]interface{}
 }
 
@@ -69,15 +70,15 @@ func (fql *FireQL) executeSelect(sQuery *sqlparser.Select) (*QueryResult, error)
 		return nil, err
 	}
 	docs := fQuery.Documents(ctx)
-	result, err := fql.readResults(docs, selectedFields)
+	result, fields, err := fql.readResults(docs, selectedFields)
 	if err != nil {
 		return nil, err
 	}
 
-	return &QueryResult{Records: result}, nil
+	return &QueryResult{Records: result, Fields: fields}, nil
 }
 
-func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields map[string]string) ([]map[string]interface{}, error) {
+func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields map[string]string) ([]map[string]interface{}, []string, error) {
 	var result []map[string]interface{}
 	for {
 		document, err := docs.Next()
@@ -85,9 +86,16 @@ func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields 
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("error reading documents %v", err)
+			return nil, nil, fmt.Errorf("error reading documents %v", err)
 		}
 		data := document.Data()
+
+		if len(selectedFields) == 0 {
+			for key, _ := range data {
+				selectedFields[key] = key
+			}
+		}
+
 		row := map[string]interface{}{}
 
 		for selectedField, alias := range selectedFields {
@@ -97,7 +105,7 @@ func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields 
 			for _, fPath := range fieldPaths {
 				val = val.(map[string]interface{})[fPath]
 				if val == nil {
-					return nil, fmt.Errorf(`unknown field "%s"`, selectedField)
+					return nil, nil, fmt.Errorf(`unknown field "%s"`, selectedField)
 				}
 			}
 			if len(alias) == 0 {
@@ -107,7 +115,13 @@ func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields 
 		}
 		result = append(result, row)
 	}
-	return result, nil
+
+	var columns []string
+	for _, alias := range selectedFields {
+		columns = append(columns, alias)
+	}
+
+	return result, columns, nil
 }
 
 func (fql *FireQL) selectFields(fQuery firestore.Query, sQuery *sqlparser.Select) (firestore.Query, map[string]string, error) {
