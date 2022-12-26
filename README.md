@@ -15,12 +15,12 @@ import (
 )
 
 func main() {
-    query, err := fireql.NewFireQL("$GCP_PROJECT_ID")
+    query, err := fireql.NewFireQL("<GCP_PROJECT_ID>")
     if err != nil {
         panic(err)
     }
     // OR
-    query, err := fireql.NewFireQLWithServiceAccountJSON("$GCP_PROJECT_ID", "$SERVICE_ACCOUNT_JSON")
+    query, err := fireql.NewFireQLWithServiceAccountJSON("<GCP_PROJECT_ID>", "<SERVICE_ACCOUNT_JSON>")
     if err != nil {
         panic(err)
     }
@@ -35,7 +35,6 @@ func main() {
     _ = result
 }
 ```
-Replace `GCP_PROJECT_ID` with your Google ProjectId.
 
 <!--
 ### Command-Line
