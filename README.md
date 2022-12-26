@@ -40,6 +40,8 @@ func main() {
 ### Command-Line
 -->
 
+See [sample queries](https://github.com/pgollangi/FireQL/wiki/Sample-Queries) for more examples.
+
 ## Authentication
 There are two functions available to get `FireQL` instance to run queries:
 
