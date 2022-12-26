@@ -2,17 +2,26 @@ package fireql
 
 import (
 	"cloud.google.com/go/firestore"
+	vkit "cloud.google.com/go/firestore/apiv1"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/xwb1989/sqlparser"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 	"strconv"
 	"strings"
 )
 
+// FireQL object is constructed to execute
+// SQL queries on Firestore database.
+// FireQL internally issue queries constructed from SQL
+// on Firestore database using Google Firestore client library
 type FireQL struct {
-	projectId string
+	projectId      string
+	serviceAccount string
 }
 
 type QueryResult struct {
@@ -20,6 +29,28 @@ type QueryResult struct {
 	Records []map[string]interface{}
 }
 
+// NewFireQL creates new FireQL instance using the "projectId"
+// passed. Google Application Default Credentials are used by
+// Firestore client library in this case.
+// See https://cloud.google.com/docs/authentication/client-libraries
+// for more information about how Application Default Credentials are
+// used by Google client libraries
+func NewFireQL(projectId string) (*FireQL, error) {
+	return &FireQL{projectId: projectId}, nil
+}
+
+// NewFireQLWithServiceAccountJSON create new FireQL instance using
+// "projectId" and "serviceAccount" JSON passed.
+// "serviceAccount" is used to authenticate to Firestore database
+// to run queries. Google Application Default Credentials are
+// // not used in this case
+func NewFireQLWithServiceAccountJSON(projectId string, serviceAccount string) (*FireQL, error) {
+	return &FireQL{projectId, serviceAccount}, nil
+}
+
+// Execute accepts SQL query as parameter, then parses, validates, construct
+// and issue Firestore query to Google Firestore database.
+// And parse results according field alias, return records.
 func (fql *FireQL) Execute(query string) (*QueryResult, error) {
 	stmt, err := sqlparser.Parse(query)
 	if err != nil {
@@ -44,7 +75,22 @@ func (fql *FireQL) executeSelect(sQuery *sqlparser.Select) (*QueryResult, error)
 
 	ctx := context.Background()
 
-	fireClient, err := firestore.NewClient(ctx, fql.projectId)
+	var firestoreOptions []option.ClientOption
+	if len(fql.serviceAccount) > 0 {
+		if !json.Valid([]byte(fql.serviceAccount)) {
+			return nil, errors.New("invalid service account, it is expected to be a JSON")
+		}
+
+		creds, err := google.CredentialsFromJSON(ctx, []byte(fql.serviceAccount),
+			vkit.DefaultAuthScopes()...,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("ServiceAccount: %v", err)
+		}
+		firestoreOptions = append(firestoreOptions, option.WithCredentials(creds))
+	}
+
+	fireClient, err := firestore.NewClient(ctx, fql.projectId, firestoreOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -243,9 +289,15 @@ func (fql *FireQL) addLimit(fQuery firestore.Query, sQuery *sqlparser.Select) (f
 }
 
 func (fql *FireQL) addOrderBy(fQuery firestore.Query, sQuery *sqlparser.Select) (firestore.Query, error) {
+	sOrders := sQuery.OrderBy
+	for _, sOrder := range sOrders {
+		column := sOrder.Expr.(*sqlparser.ColName).Name.String()
+		fmt.Printf("ORDER %s, %T\n", column, sOrder.Expr)
+		direction := firestore.Asc
+		if sOrder.Direction == sqlparser.DescScr {
+			direction = firestore.Desc
+		}
+		fQuery = fQuery.OrderBy(column, direction)
+	}
 	return fQuery, nil
-}
-
-func NewFireQL(projectId string) (*FireQL, error) {
-	return &FireQL{projectId}, nil
 }
