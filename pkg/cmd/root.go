@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"errors"
@@ -26,8 +26,8 @@ var RootCmd = &cobra.Command{
 	Version:       fmt.Sprintf("%s (%s)\n", Version, Build),
 }
 
-func main() {
-	RootCmd.Flags().StringP("project", "p", "", "Id of the GCP project")
+func init() {
+	RootCmd.Flags().StringP("project", "p", "", "Required. Id of the GCP project")
 	RootCmd.Flags().StringP("service-account", "s", "", "Path to service account file to authenticate with Firestore")
 	RootCmd.Flags().IntP("limit", "l", 100, "Default limit to apply on SELECTed results. Set `0` to result unlimited.")
 
@@ -35,14 +35,15 @@ func main() {
 
 	err := RootCmd.MarkFlagRequired("project")
 	if err != nil {
-		printError(err)
-		return
+		panic(err)
 	}
-	err = RootCmd.Execute()
+}
+
+func Execute() {
+	err := RootCmd.Execute()
 	if err != nil {
 		printError(err)
 	}
-
 }
 
 type CmdContext struct {
