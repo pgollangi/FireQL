@@ -163,7 +163,10 @@ func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields 
 	}
 
 	var columns []string
-	for _, alias := range selectedFields {
+	for field, alias := range selectedFields {
+		if len(alias) == 0 {
+			alias = field
+		}
 		columns = append(columns, alias)
 	}
 
@@ -176,13 +179,11 @@ func (fql *FireQL) selectFields(fQuery firestore.Query, sQuery *sqlparser.Select
 
 selects:
 	for _, qSelect := range qSelects {
-		fmt.Printf("SELECT: %#v \n", qSelect)
 		switch qSelect := qSelect.(type) {
 		case *sqlparser.StarExpr:
 			fields = map[string]string{}
 			break selects
 		case *sqlparser.AliasedExpr:
-			fmt.Printf("SELECT AliasedExpr: %#v \n", qSelect.Expr)
 			field := qSelect.Expr.(*sqlparser.ColName).Name.String()
 			alias := qSelect.As.String()
 			fields[field] = alias
@@ -305,7 +306,6 @@ func (fql *FireQL) addOrderBy(fQuery firestore.Query, sQuery *sqlparser.Select) 
 	sOrders := sQuery.OrderBy
 	for _, sOrder := range sOrders {
 		column := sOrder.Expr.(*sqlparser.ColName).Name.String()
-		fmt.Printf("ORDER %s, %T\n", column, sOrder.Expr)
 		direction := firestore.Asc
 		if sOrder.Direction == sqlparser.DescScr {
 			direction = firestore.Desc
