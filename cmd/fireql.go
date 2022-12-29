@@ -29,6 +29,8 @@ var RootCmd = &cobra.Command{
 func main() {
 	RootCmd.Flags().StringP("project", "p", "", "Id of the GCP project")
 	RootCmd.Flags().StringP("service-account", "s", "", "Path to service account file to authenticate with Firestore")
+	RootCmd.Flags().IntP("limit", "l", 100, "Default limit to apply on SELECTed results. Set `0` to result unlimited.")
+
 	RootCmd.SetVersionTemplate(fmt.Sprintf("fireql version %s (%s)\nFor more info: github.com/pgollangi/FireQL\n", Version, Build))
 
 	err := RootCmd.MarkFlagRequired("project")
@@ -56,29 +58,32 @@ func runCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var serviceAccount string
+	var options []fireql.Option
 
 	serviceAccountFile, err := cmd.Flags().GetString("service-account")
+	if err != nil {
+		printError(errors.New(fmt.Sprintf("service-account: %s", err)))
+		return
+	}
 	if serviceAccountFile != "" {
-
+		serviceAccount, err := os.ReadFile(serviceAccountFile)
 		if err != nil {
 			printError(errors.New(fmt.Sprintf("service-account: %s", err)))
 			return
 		}
+		options = append(options, fireql.OptionServiceAccount(string(serviceAccount)))
+	}
 
-		serviceAccountData, err := os.ReadFile(serviceAccountFile)
-		if err != nil {
-			printError(errors.New(fmt.Sprintf("service-account: %s", err)))
-			return
-		}
-		serviceAccount = string(serviceAccountData)
+	defaultLimit, err := cmd.Flags().GetInt("limit")
+	if err != nil {
+		printError(errors.New(fmt.Sprintf("limit: %s", err)))
+		return
 	}
-	var fsQuery *fireql.FireQL
-	if serviceAccount == "" {
-		fsQuery, err = fireql.NewFireQL(projectId)
-	} else {
-		fsQuery, err = fireql.NewFireQLWithServiceAccountJSON(projectId, serviceAccount)
+	if defaultLimit > 0 {
+		options = append(options, fireql.OptionDefaultLimit(defaultLimit))
 	}
+
+	fsQuery, err := fireql.New(projectId, options...)
 	if err != nil {
 		printError(err)
 		return

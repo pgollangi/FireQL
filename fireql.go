@@ -22,6 +22,7 @@ import (
 type FireQL struct {
 	projectId      string
 	serviceAccount string
+	defaultLimit   int
 }
 
 type QueryResult struct {
@@ -29,23 +30,21 @@ type QueryResult struct {
 	Records []map[string]interface{}
 }
 
-// NewFireQL creates new FireQL instance using the "projectId"
-// passed. Google Application Default Credentials are used by
-// Firestore client library in this case.
+// New creates new FireQL instance using the "projectId"
+// passed. Accepts list of Option to pass other configuration params.
+// Google Application Default Credentials are used by
+// Firestore client library if service account is not passed via Option.
 // See https://cloud.google.com/docs/authentication/client-libraries
 // for more information about how Application Default Credentials are
 // used by Google client libraries
-func NewFireQL(projectId string) (*FireQL, error) {
-	return &FireQL{projectId: projectId}, nil
-}
-
-// NewFireQLWithServiceAccountJSON create new FireQL instance using
-// "projectId" and "serviceAccount" JSON passed.
-// "serviceAccount" is used to authenticate to Firestore database
-// to run queries. Google Application Default Credentials are
-// // not used in this case
-func NewFireQLWithServiceAccountJSON(projectId string, serviceAccount string) (*FireQL, error) {
-	return &FireQL{projectId, serviceAccount}, nil
+func New(projectId string, options ...Option) (*FireQL, error) {
+	fql := &FireQL{projectId: projectId}
+	for _, opt := range options {
+		if err := opt(fql); err != nil {
+			return nil, err
+		}
+	}
+	return fql, nil
 }
 
 // Execute accepts SQL query as parameter, then parses, validates, construct
@@ -298,6 +297,8 @@ func (fql *FireQL) addLimit(fQuery firestore.Query, sQuery *sqlparser.Select) (f
 			return fQuery, err
 		}
 		fQuery = fQuery.Limit(rows.(int))
+	} else if fql.defaultLimit > 0 {
+		fQuery = fQuery.Limit(fql.defaultLimit)
 	}
 	return fQuery, nil
 }
