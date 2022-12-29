@@ -46,11 +46,11 @@ func Execute() {
 	}
 }
 
-type CmdContext struct {
+type Context struct {
 	fsQuery *fireql.FireQL
 }
 
-var ctx *CmdContext
+var ctx *Context
 
 func runCommand(cmd *cobra.Command, args []string) {
 	projectId, err := cmd.Flags().GetString("project")
@@ -90,7 +90,7 @@ func runCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	ctx = &CmdContext{fsQuery: fsQuery}
+	ctx = &Context{fsQuery: fsQuery}
 
 	fmt.Println("Welcome! Use SQL to query Firestore.\nUse Ctrl+D, type \"exit\" to exit.\nVisit github.com/pgollangi/FireQL for more details.")
 	initPrompt(fsQuery)
