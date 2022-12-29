@@ -151,7 +151,7 @@ func (fql *FireQL) readResults(docs *firestore.DocumentIterator, selectedFields 
 			for _, fPath := range fieldPaths {
 				val = val.(map[string]interface{})[fPath]
 				if val == nil {
-					return nil, nil, fmt.Errorf(`unknown field "%s"`, selectedField)
+					return nil, nil, fmt.Errorf(`unknown field "%s" in doc "%s"`, selectedField, document.Ref.ID)
 				}
 			}
 			if len(alias) == 0 {
@@ -176,11 +176,13 @@ func (fql *FireQL) selectFields(fQuery firestore.Query, sQuery *sqlparser.Select
 
 selects:
 	for _, qSelect := range qSelects {
+		fmt.Printf("SELECT: %#v \n", qSelect)
 		switch qSelect := qSelect.(type) {
 		case *sqlparser.StarExpr:
 			fields = map[string]string{}
 			break selects
 		case *sqlparser.AliasedExpr:
+			fmt.Printf("SELECT AliasedExpr: %#v \n", qSelect.Expr)
 			field := qSelect.Expr.(*sqlparser.ColName).Name.String()
 			alias := qSelect.As.String()
 			fields[field] = alias
@@ -232,11 +234,22 @@ func (fql *FireQL) addWhereExpr(fQuery firestore.Query, sQuery *sqlparser.Select
 		if err != nil {
 			return fQuery, err
 		}
-		fQuery = fQuery.Where(expr.Left.(*sqlparser.ColName).Name.String(), expr.Operator, val)
+		fQuery = fQuery.Where(expr.Left.(*sqlparser.ColName).Name.String(),
+			fql.getCompareOperator(expr.Operator), val)
 	default:
 		return fQuery, fmt.Errorf("unsupported WHERE clause: %s", sqlparser.String(expr))
 	}
 	return fQuery, nil
+}
+
+func (fql *FireQL) getCompareOperator(op string) string {
+	switch op {
+	case sqlparser.EqualStr:
+		return "=="
+	case sqlparser.NotInStr:
+		return "not-in"
+	}
+	return op
 }
 
 func (fql *FireQL) getValueFromExpr(valExpr sqlparser.Expr) (interface{}, error) {
