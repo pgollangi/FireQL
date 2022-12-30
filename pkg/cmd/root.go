@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/c-bata/go-prompt"
@@ -115,11 +116,22 @@ func printResult(result *util.QueryResult) {
 	for _, row := range result.Records {
 		tRow := make([]string, len(result.Fields))
 		for idx, field := range result.Fields {
-			tRow[idx] = fmt.Sprintf("%v", row[field])
+			val := row[field]
+			switch cellVal := val.(type) {
+			case map[string]interface{}:
+				jsonVal, err := json.Marshal(cellVal)
+				if err == nil {
+					val = string(jsonVal)
+				} else {
+					val = errors.New("error converting map to JSON")
+				}
+			}
+			tRow[idx] = fmt.Sprintf("%v", val)
 		}
 		table.Append(tRow)
 	}
 	table.Render()
+	fmt.Printf("(%d rows)\n", len(result.Records))
 }
 
 func printError(err error) {
