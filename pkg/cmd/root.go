@@ -33,8 +33,6 @@ func init() {
 	RootCmd.Flags().StringP("service-account", "s", "", "Path to service account file to authenticate with Firestore")
 	RootCmd.Flags().IntP("limit", "l", 100, "Default limit to apply on SELECTed results. Set `0` to result unlimited.")
 
-	RootCmd.SetVersionTemplate(fmt.Sprintf("fireql version %s (%s)\nFor more info: github.com/pgollangi/FireQL\n", Version, Build))
-
 	err := RootCmd.MarkFlagRequired("project")
 	if err != nil {
 		panic(err)
@@ -42,6 +40,8 @@ func init() {
 }
 
 func Execute() {
+	RootCmd.SetVersionTemplate(fmt.Sprintf("fireql version %s (%s)\nFor more info: github.com/pgollangi/FireQL\n", Version, Build))
+
 	err := RootCmd.Execute()
 	if err != nil {
 		printError(err)
