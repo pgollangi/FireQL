@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pgollangi/fireql/pkg/support"
 	"github.com/pgollangi/fireql/pkg/util"
 	"github.com/xwb1989/sqlparser"
 	"golang.org/x/oauth2/google"
@@ -73,90 +74,209 @@ func (sel *SelectStatement) Execute() (*util.QueryResult, error) {
 		return nil, err
 	}
 	docs := fQuery.Documents(context.Background())
-	result, fields, err := sel.readResults(docs, selectedFields)
-	if err != nil {
-		return nil, err
-	}
-
-	return &util.QueryResult{Records: result, Fields: fields}, nil
+	return sel.readResults(docs, selectedFields)
 }
 
-func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, selectedFields map[string]string) ([]map[string]interface{}, []string, error) {
-	var result []map[string]interface{}
-	for {
-		document, err := docs.Next()
-		if err == iterator.Done {
-			break
+func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, selectedColumns []*selectColumn) (*util.QueryResult, error) {
+	document, err := docs.Next()
+	if err == iterator.Done {
+		var columns []string
+		for _, column := range selectedColumns {
+			columns = append(columns, column.alias)
 		}
-		if err != nil {
-			return nil, nil, fmt.Errorf("error reading documents %v", err)
+		return &util.QueryResult{Columns: columns, Records: [][]interface{}{}}, nil
+	}
+
+	// Insert COLUMNS for START (*) selection
+	startIdx := -1
+	for idx, column := range selectedColumns {
+		if column.colType == Star {
+			startIdx = idx
 		}
+	}
+	if startIdx != -1 {
 		data := document.Data()
-
-		if len(selectedFields) == 0 {
-			for key := range data {
-				selectedFields[key] = key
+		for key := range data {
+			newCol := &selectColumn{
+				field:   key,
+				alias:   key,
+				colType: Field,
 			}
+			if len(selectedColumns) == startIdx {
+				selectedColumns = append(selectedColumns, newCol)
+			} else {
+				selectedColumns = append(selectedColumns[:startIdx+1], selectedColumns[startIdx:]...)
+				selectedColumns[startIdx] = newCol
+			}
+			startIdx++
 		}
-
-		row := map[string]interface{}{}
-
-		for selectedField, alias := range selectedFields {
-			fieldPaths := strings.Split(selectedField, ".")
-			var val interface{}
-			val = data
-			for _, fPath := range fieldPaths {
-				val = val.(map[string]interface{})[fPath]
-				if val == nil {
-					return nil, nil, fmt.Errorf(`unknown field "%s" in doc "%s"`, selectedField, document.Ref.ID)
-				}
-			}
-			if len(alias) == 0 {
-				alias = selectedField
-			}
-			row[alias] = val
-		}
-		result = append(result, row)
 	}
 
 	var columns []string
-	for field, alias := range selectedFields {
-		if len(alias) == 0 {
-			alias = field
-		}
-		columns = append(columns, alias)
+	var rows [][]interface{}
+
+	for _, column := range selectedColumns {
+		columns = append(columns, column.alias)
 	}
 
-	return result, columns, nil
+	for {
+		row := make([]interface{}, len(columns))
+		rows = append(rows, row)
+
+		data := document.Data()
+
+		for idx, column := range selectedColumns {
+			val, err := readColumnValue(document, &data, column)
+			if err != nil {
+				return nil, err
+			}
+			row[idx] = val
+		}
+		document, err = docs.Next()
+		if err == iterator.Done {
+			break
+		}
+	}
+
+	return &util.QueryResult{Columns: columns, Records: rows}, nil
 }
 
-func (sel *SelectStatement) selectFields(fQuery firestore.Query, sQuery *sqlparser.Select) (firestore.Query, map[string]string, error) {
-	qSelects := sQuery.SelectExprs
-	fields := map[string]string{}
+func readColumnValue(document *firestore.DocumentSnapshot, data *map[string]interface{}, column *selectColumn) (interface{}, error) {
+	var val interface{}
+	switch column.colType {
+	case Field:
+		fieldPaths := strings.Split(column.field, ".")
+		var colData interface{}
+		colData = *data
+		for _, fPath := range fieldPaths {
+			colData = colData.(map[string]interface{})[fPath]
+			if colData == nil {
+				return nil, fmt.Errorf(`unknown field "%s" in doc "%s"`, column.field, document.Ref.ID)
+			}
+		}
+		val = colData
+		break
+	case Function:
+		params := make([]interface{}, len(column.params))
+		for i, param := range column.params {
+			paramVal, err := readColumnValue(document, data, param)
+			if err != nil {
+				return nil, err
+			}
+			params[i] = paramVal
 
-selects:
+		}
+		funcVal, err := support.ExecFunc(column.field, params)
+		if err != nil {
+			return nil, err
+		}
+		val = funcVal
+		break
+	}
+	return val, nil
+}
+
+type ColumnType int
+
+const (
+	Field    ColumnType = 0
+	Function            = 1
+	Star                = 2
+)
+
+type selectColumn struct {
+	field   string
+	alias   string
+	colType ColumnType
+	params  []*selectColumn
+}
+
+func (sel *SelectStatement) selectFields(fQuery firestore.Query, sQuery *sqlparser.Select) (firestore.Query, []*selectColumn, error) {
+	qSelects := sQuery.SelectExprs
+
+	columns, err := sel.collectSelectColumns(qSelects)
+	if err != nil {
+		return fQuery, nil, err
+	}
+
+	selects := sel.collectSelectFields(columns)
+	if len(selects) > 0 {
+		fQuery = fQuery.Select(selects...)
+	}
+	return fQuery, columns, nil
+}
+
+func (sel *SelectStatement) collectSelectFields(columns []*selectColumn) []string {
+	var fields []string
+	for _, col := range columns {
+		switch col.colType {
+		case Field:
+			fields = append(fields, col.field)
+			break
+		case Function:
+			paramFields := sel.collectSelectFields(col.params)
+			fields = append(fields, paramFields...)
+			break
+		case Star:
+			// Don't select fields on firestore.Query to return all fields
+			fields = []string{}
+		}
+	}
+	return fields
+}
+
+func (sel *SelectStatement) collectSelectColumns(qSelects sqlparser.SelectExprs) ([]*selectColumn, error) {
+
+	var columns []*selectColumn
 	for _, qSelect := range qSelects {
 		switch qSelect := qSelect.(type) {
 		case *sqlparser.StarExpr:
-			fields = map[string]string{}
-			break selects
+			columns = append(columns, &selectColumn{
+				field:   "*",
+				colType: Star,
+			})
+			break
 		case *sqlparser.AliasedExpr:
-			field := qSelect.Expr.(*sqlparser.ColName).Name.String()
-			alias := qSelect.As.String()
-			fields[field] = alias
+			switch colExpr := qSelect.Expr.(type) {
+			case *sqlparser.ColName:
+				field := colExpr.Name.String()
+				alias := qSelect.As.String()
+				if alias == "" {
+					alias = field
+				}
+				columns = append(columns, &selectColumn{
+					field:   field,
+					alias:   alias,
+					colType: Field,
+				})
+				break
+			case *sqlparser.FuncExpr:
+				name := colExpr.Name.String()
+				alias := qSelect.As.String()
+				if alias == "" {
+					alias = name
+				}
+				params, err := sel.collectSelectColumns(colExpr.Exprs)
+				if err != nil {
+					return nil, err
+				}
+				err = support.ValidateFunc(name, params)
+				if err != nil {
+					return nil, err
+				}
+				columns = append(columns, &selectColumn{
+					field:   name,
+					alias:   alias,
+					colType: Function,
+					params:  params,
+				})
+				break
+			}
+			break
 		}
 	}
 
-	if len(fields) > 0 {
-		selects := make([]string, len(fields))
-		i := 0
-		for name := range fields {
-			selects[i] = name
-			i++
-		}
-		fQuery = fQuery.Select(selects...)
-	}
-	return fQuery, fields, nil
+	return columns, nil
 }
 
 func (sel *SelectStatement) addWhere(fQuery firestore.Query, sQuery *sqlparser.Select) (firestore.Query, error) {

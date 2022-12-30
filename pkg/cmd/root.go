@@ -111,12 +111,11 @@ func initPrompt() {
 
 func printResult(result *util.QueryResult) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(result.Fields)
+	table.SetHeader(result.Columns)
 
 	for _, row := range result.Records {
-		tRow := make([]string, len(result.Fields))
-		for idx, field := range result.Fields {
-			val := row[field]
+		tRow := make([]string, len(result.Columns))
+		for idx, val := range row {
 			switch cellVal := val.(type) {
 			case map[string]interface{}:
 				jsonVal, err := json.Marshal(cellVal)

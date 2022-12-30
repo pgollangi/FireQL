@@ -17,20 +17,16 @@ import (
 )
 
 func main() {
-    query, err := fireql.NewFireQL("<GCP_PROJECT_ID>")
+    fql, err := fireql.New("<GCP_PROJECT_ID>")
+    //OR
+    fql, err = fireql.New("<GCP_PROJECT_ID>",
+    fireql.OptionServiceAccount("<SERVICE_ACCOUNT_JSON>"))
     if err != nil {
         panic(err)
     }
-    // OR
-    query, err := fireql.NewFireQLWithServiceAccountJSON("<GCP_PROJECT_ID>", "<SERVICE_ACCOUNT_JSON>")
-    if err != nil {
-        panic(err)
-    }
-	
-    // THEN EXECUTE QUERY
-	
-    result, err := query.
-        Execute("Select Email, FullName as Name, `Address.City` as City from users LIMIT 10")
+    
+    result, err := fql.
+        Execute("SELECT * `users` order by id desc limit 10")
     if err != nil {
         panic(err)
     }
@@ -42,12 +38,19 @@ func main() {
 ### Command-Line
 -->
 
-## Authentication
-There are two functions available to get `FireQL` instance to run queries:
+## Some cool `SELECT` queries
+```sql
+select * from users
+select *, id as user_id from users
+select id, email as email_address, `address.city` AS city from `users`
+select * from users order by 'address.city' desc limit 10
+select * from `users`
+select id, LENGTH(contacts) as total_contacts from `users`
+```
 
-- `fireql.NewFireQL`: `FireQL` uses Google [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials) to authenticate to Firestore database.
+### Authentication
 
-- `fireql.NewFireQLWithServiceAccountJSON`: `FireQL` uses `serviceAccount` key JSON passed via args used for authentication to Firebase database.
+`fireql.NewL` assume Google [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials) to authenticate to Firestore database if `serverAccount` not passed. Otherwise use service account for authentication.
 
 ## Installation
 
