@@ -115,7 +115,7 @@ In additional to that:
 
 ## Future scope
 
-- [ ] Create interactive command-line shell to run queries
+- [x] Create interactive command-line shell to run queries
 - [ ] Expand support all logical conditions in `WHERE` clause by internally issuing multiple query requests to Firestore and merge results locally before returning.
 - [ ] `GROUP BY` support
 - [ ] Support other DML queries: `INSERT`, `UPDATE`, and `DELETE`
