@@ -17,14 +17,12 @@ import (
 func main() {
     fql, err := fireql.New("<GCP_PROJECT_ID>")
     //OR
-    fql, err = fireql.New("<GCP_PROJECT_ID>",
-    fireql.OptionServiceAccount("<SERVICE_ACCOUNT_JSON>"))
+    fql, err = fireql.New("<GCP_PROJECT_ID>", fireql.OptionServiceAccount("<SERVICE_ACCOUNT_JSON>"))
     if err != nil {
         panic(err)
     }
     
-    result, err := fql.
-        Execute("SELECT * `users` order by id desc limit 10")
+    result, err := fql.Execute("SELECT * `users` order by id desc limit 10")
     if err != nil {
         panic(err)
     }
