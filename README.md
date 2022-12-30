@@ -5,7 +5,7 @@ Query Google Firestore database using SQL syntax.
 
 ## Usage
 
-<!-- `FireQL` can be used Go library or interactive command-line tool. -->
+`FireQL` can be used as Go library or interactive command-line tool.
 
 ### Go Library
 An example of querying collections using SQL syntax:
@@ -32,11 +32,30 @@ func main() {
 }
 ```
 
-<!--
 ### Command-Line
--->
+```bash
+fireql [flags]
+```
+#### Example
+```bash
+$ fireql --project $PROJECT_ID
+Welcome! Use SQL to query Firestore.
+Use Ctrl+D, type "exit" to exit.
+Visit github.com/pgollangi/FireQL for more details.
+fireql>select id, name from users limit 2
++------+------------+
+|  ID  |    NAME    |
++------+------------+
+| 1046 | bob        |
+| 1047 | smith      |
++------+------------+
+(2 rows)
+fireql>
+```
+Read the [documentation](https://pgollangi.github.io/FireQL/) for more information on the CLI usage.
 
-## Some cool `SELECT` queries
+## Examples
+Some cool `SELECT` queries that are possible with `FireQL`:
 ```sql
 select * from users
 select *, id as user_id from users
@@ -53,25 +72,35 @@ See [Wiki](https://github.com/pgollangi/FireQL/wiki) for more examples and sampl
 
 ## Installation
 
-### Go
-
-First, use `go get` to install the latest version of the library.
-```bash
-go get -u github.com/pgollangi/fireql@latest
-
-```
-Next, include `FireQL` in your application:
-```go
-import "github.com/pgollangi/fireql"
-```
-<!--
 ### Homebrew
+```bash
+brew install pgollangi/tap/fireql
+```
+Updating:
+```bash
+brew upgrade fireql
+```
 
 ### Scoop (for windows)
+```sql
+scoop bucket add pgollangi-bucket https://github.com/pgollangi/scoop-bucket.git
+scoop install fireql
+```
+
+### Docker
+```bash
+docker run pgollangi/fireql
+```
+
+### Go
+
+```bash
+go install github.com/pgollangi/fireql@latest
+```
 
 ### Manual
 You can alternately download suitable binary for your OS at the [releases page](https://github.com/pgollangi/fireql/releases).
--->
+
 ## Limitations
 All of [firestore query limitations](https://firebase.google.com/docs/firestore/query-data/queries#query_limitations) are applicable when running queries using `FireQL`.
 

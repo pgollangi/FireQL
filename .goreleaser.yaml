@@ -64,7 +64,7 @@ brews:
     url_template: "http://github.com/pgollangi/FireQL/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     # Packages your package depends on.
     homepage: "https://github.com/pgollangi/FireQL"
-    install: bin.install "bin/fireql"
+#    install: bin.install "bin/fireql"
     test: |
       system "#{bin}/fireql --version"
 
