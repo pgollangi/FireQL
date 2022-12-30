@@ -7,7 +7,7 @@ type Option func(prompt *FireQL) error
 // OptionServiceAccount to set a service account to be used for Firestore authentication.
 func OptionServiceAccount(serviceAccount string) Option {
 	return func(fql *FireQL) error {
-		fql.serviceAccount = serviceAccount
+		fql.context.ServiceAccount = serviceAccount
 		return nil
 	}
 }
@@ -16,7 +16,7 @@ func OptionServiceAccount(serviceAccount string) Option {
 // Considered only when LIMIT not used in SQL query.
 func OptionDefaultLimit(limit int) Option {
 	return func(fql *FireQL) error {
-		fql.defaultLimit = limit
+		fql.context.DefaultLimit = limit
 		return nil
 	}
 }

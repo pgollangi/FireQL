@@ -6,11 +6,12 @@ import (
 	"github.com/c-bata/go-prompt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pgollangi/fireql"
+	"github.com/pgollangi/fireql/pkg/util"
 	"github.com/spf13/cobra"
 	"os"
 )
 
-// Version is the version for netselect
+// Version is the version for fireql
 var Version string
 
 // Build holds the date bin was released
@@ -93,10 +94,10 @@ func runCommand(cmd *cobra.Command, args []string) {
 	ctx = &Context{fsQuery: fsQuery}
 
 	fmt.Println("Welcome! Use SQL to query Firestore.\nUse Ctrl+D, type \"exit\" to exit.\nVisit github.com/pgollangi/FireQL for more details.")
-	initPrompt(fsQuery)
+	initPrompt()
 }
 
-func initPrompt(query *fireql.FireQL) {
+func initPrompt() {
 	p := prompt.New(
 		executor,
 		completer,
@@ -107,7 +108,7 @@ func initPrompt(query *fireql.FireQL) {
 	p.Run()
 }
 
-func printResult(result *fireql.QueryResult) {
+func printResult(result *util.QueryResult) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(result.Fields)
 
