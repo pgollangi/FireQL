@@ -14,6 +14,7 @@ jobs:
           go-version: '1.19'
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v1'
+      - name: Install Google Cloud SDK components
         run: yes | gcloud components install beta cloud-firestore-emulator
       - name: Run coverage
         run: go test ./... -v -race -coverprofile=coverage.txt -covermode=atomic
