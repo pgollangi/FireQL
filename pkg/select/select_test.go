@@ -35,6 +35,16 @@ var selectTests = []TestExpect{
 		columns: []string{"id", "email", "username", "address", "name"},
 		length:  "21",
 	},
+	TestExpect{
+		query:   "select id, email, address from users",
+		columns: []string{"id", "email", "address"},
+		length:  "21",
+	},
+	TestExpect{
+		query:   "select id, email, address from users limit 5",
+		columns: []string{"id", "email", "address"},
+		length:  "5",
+	},
 }
 
 func newFirestoreTestClient(ctx context.Context) *firestore.Client {
