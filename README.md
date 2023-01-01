@@ -1,4 +1,4 @@
-[![build](https://github.com/pgollangi/FireQL/actions/workflows/ci.yml/badge.svg)](https://github.com/pgollangi/FireQL/actions/workflows/ci.yml)
+[![build](https://github.com/pgollangi/FireQL/actions/workflows/build.yml/badge.svg)](https://github.com/pgollangi/FireQL/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/pgollangi/FireQL/branch/main/graph/badge.svg?token=3GKY3T9HYF)](https://codecov.io/gh/pgollangi/FireQL)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pgollangi/FireQL)](https://goreportcard.com/report/github.com/pgollangi/FireQL)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pgollangi/FireQL)
