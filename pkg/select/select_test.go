@@ -78,6 +78,12 @@ var selectTests = []TestExpect{
 		length:  "1",
 		records: [][]interface{}{[]interface{}{6}},
 	},
+	TestExpect{
+		query:   "select id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
+		columns: []string{"id"},
+		length:  "1",
+		records: [][]interface{}{[]interface{}{float64(10)}},
+	},
 }
 
 func newFirestoreTestClient(ctx context.Context) *firestore.Client {
