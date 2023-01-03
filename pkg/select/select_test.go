@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pgollangi/fireql/pkg/util"
 	"io"
 	"log"
 	"os"
 	"os/exec"
-	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -59,6 +59,24 @@ var selectTests = []TestExpect{
 		query:   "select id, email, address from users limit 5",
 		columns: []string{"id", "email", "address"},
 		length:  "5",
+	},
+	TestExpect{
+		query:   "select id from users where email='aeatockj@psu.edu'",
+		columns: []string{"id"},
+		length:  "1",
+		records: [][]interface{}{[]interface{}{float64(20)}},
+	},
+	TestExpect{
+		query:   "select id from users order by id desc limit 1",
+		columns: []string{"id"},
+		length:  "1",
+		records: [][]interface{}{[]interface{}{float64(21)}},
+	},
+	TestExpect{
+		query:   "select LENGTH(username) as uLen from users where id = 8",
+		columns: []string{"uLen"},
+		length:  "1",
+		records: [][]interface{}{[]interface{}{6}},
 	},
 }
 
@@ -165,15 +183,18 @@ func TestSelectQueries(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		} else {
-			sort.Strings(actual.Columns)
-			sort.Strings(tt.columns)
-			if !stringSlicesEqual(actual.Columns, tt.columns) {
+			less := func(a, b string) bool { return a < b }
+			if cmp.Diff(tt.columns, actual.Columns, cmpopts.SortSlices(less)) != "" {
 				t.Errorf("QueryResult.Fields(%v): expected %v, actual %v", tt.query, tt.columns, actual.Columns)
 			}
 			if tt.length != "" && len(actual.Records) != first(strconv.Atoi(tt.length)) {
 				t.Errorf("len(QueryResult.Records)(%v): expected %v, actual %v", tt.query, len(actual.Records), tt.length)
 			}
-			if tt.records != nil && !reflect.DeepEqual(actual.Records, tt.records) {
+			if tt.records != nil && !cmp.Equal(actual.Records, tt.records) {
+				a, _ := json.Marshal(tt.records)
+				log.Println(string(a))
+				a, _ = json.Marshal(actual.Records)
+				log.Println(string(a))
 				t.Errorf("QueryResult.Records(%v): expected %v, actual %v", tt.query, tt.records, actual.Records)
 			}
 		}
@@ -182,18 +203,4 @@ func TestSelectQueries(t *testing.T) {
 
 func first(n int, _ error) int {
 	return n
-}
-
-func stringSlicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		fmt.Printf("NO LEN %d != %d \n", len(a), len(b))
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			fmt.Printf("NOT EQUAL %s != %s", v, b[i])
-			return false
-		}
-	}
-	return true
 }
