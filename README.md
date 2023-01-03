@@ -7,9 +7,10 @@
 ![License: MIT](https://img.shields.io/github/license/pgollangi/FireQL)
 
 # FireQL
-Query Google Firestore database using SQL syntax.
 
-`FireQL` is a library built on top of the official [Google Firestore Client SDK](https://pkg.go.dev/cloud.google.com/go/firestore) that will allow running queries Cloud Firestore database using SQL syntax. Inspired by [Firebase FireSQL](https://firebaseopensource.com/projects/jsayol/firesql/).
+`FireQL` is the Golang library and interactive CLI tool to query the Google Firestore database using SQL syntax.
+
+It is built on top of the official [Google Firestore Client SDK](https://pkg.go.dev/cloud.google.com/go/firestore) that will allow running queries Cloud Firestore database using SQL syntax. Inspired by [Firebase FireSQL](https://firebaseopensource.com/projects/jsayol/firesql/).
 
 
 [![fireql](examples/fireql_help.png)](https://asciinema.org/a/548756?cols=150&rows=50)
@@ -33,6 +34,7 @@ func main() {
         panic(err)
     }
     
+	// Now, execute SELECT query
     result, err := fql.Execute("SELECT * `users` order by id desc limit 10")
     if err != nil {
         panic(err)
@@ -61,7 +63,7 @@ fireql>select id, name from users limit 2
 (2 rows)
 fireql>
 ```
-Read the [documentation](https://pgollangi.github.io/FireQL/) for more information on the CLI usage.
+Read the [documentation](https://pgollangi.github.io/FireQL/) for more information on CLI usage.
 
 ## Examples
 Some cool `SELECT` queries that are possible with `FireQL`:
@@ -70,14 +72,14 @@ select * from users
 select *, id as user_id from users
 select id, email as email_address, `address.city` AS city from `users`
 select * from users order by 'address.city' desc limit 10
-select * from `users`
+select * from `users` where id > 50
 select id, LENGTH(contacts) as total_contacts from `users`
 ```
-See [Wiki](https://github.com/pgollangi/FireQL/wiki) for more examples and sample queries.
+See [Wiki](https://github.com/pgollangi/FireQL/wiki) for more examples.
 
 ### Authentication
 
-`fireql.NewL` assume Google [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials) to authenticate to Firestore database if `serverAccount` not passed. Otherwise use service account for authentication.
+`fireql.New` assume Google [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials) to authenticate to Firestore database if `serverAccount` not passed. Otherwise use service account for authentication.
 
 ## Installation
 
@@ -108,12 +110,12 @@ go install github.com/pgollangi/fireql@latest
 ```
 
 ### Manual
-You can alternately download suitable binary for your OS at the [releases page](https://github.com/pgollangi/fireql/releases).
+You can alternately download a suitable binary for your OS at the [releases page](https://github.com/pgollangi/fireql/releases).
 
 ## Limitations
 All of [firestore query limitations](https://firebase.google.com/docs/firestore/query-data/queries#query_limitations) are applicable when running queries using `FireQL`.
 
-In additional to that:
+In addition to that:
 
 - Only `SELECT` queries for now. Support for `INSERT`, `UPDATE`, and `DELETE` might come in the future.
 - Only `AND` conditions supported in `WHERE` clause. 
@@ -123,8 +125,8 @@ In additional to that:
 
 ## Future scope
 
-- [x] Create interactive command-line shell to run queries
-- [ ] Expand support all logical conditions in `WHERE` clause by internally issuing multiple query requests to Firestore and merge results locally before returning.
+- [x] Create an interactive command-line shell to run queries
+- [ ] Expand support for all logical conditions in `WHERE` clause by internally issuing multiple query requests to Firestore and merging results locally before returning.
 - [ ] `GROUP BY` support
 - [ ] Support other DML queries: `INSERT`, `UPDATE`, and `DELETE`
 
