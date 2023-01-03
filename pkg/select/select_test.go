@@ -36,6 +36,21 @@ var selectTests = []TestExpect{
 		length:  "21",
 	},
 	TestExpect{
+		query:   "select id as uid, * from users",
+		columns: []string{"uid", "id", "email", "username", "address", "name"},
+		length:  "21",
+	},
+	TestExpect{
+		query:   "select *, username as uname from users",
+		columns: []string{"id", "email", "username", "address", "name", "uname"},
+		length:  "21",
+	},
+	TestExpect{
+		query:   "select  id as uid, *, username as uname from users",
+		columns: []string{"uid", "id", "email", "username", "address", "name", "uname"},
+		length:  "21",
+	},
+	TestExpect{
 		query:   "select id, email, address from users",
 		columns: []string{"id", "email", "address"},
 		length:  "21",
@@ -152,7 +167,7 @@ func TestSelectQueries(t *testing.T) {
 		} else {
 			sort.Strings(actual.Columns)
 			sort.Strings(tt.columns)
-			if stringSlicesEqual(actual.Columns, tt.columns) {
+			if !stringSlicesEqual(actual.Columns, tt.columns) {
 				t.Errorf("QueryResult.Fields(%v): expected %v, actual %v", tt.query, tt.columns, actual.Columns)
 			}
 			if tt.length != "" && len(actual.Records) != first(strconv.Atoi(tt.length)) {
@@ -171,10 +186,12 @@ func first(n int, _ error) int {
 
 func stringSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
+		fmt.Printf("NO LEN %d != %d \n", len(a), len(b))
 		return false
 	}
 	for i, v := range a {
 		if v != b[i] {
+			fmt.Printf("NOT EQUAL %s != %s", v, b[i])
 			return false
 		}
 	}

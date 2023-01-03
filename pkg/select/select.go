@@ -88,13 +88,16 @@ func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, select
 	}
 
 	// Insert COLUMNS for START (*) selection
-	startIdx := -1
+	starIdx := -1
 	for idx, column := range selectedColumns {
 		if column.colType == Star {
-			startIdx = idx
+			starIdx = idx
+			break
 		}
 	}
-	if startIdx != -1 {
+	if starIdx != -1 {
+		// Remove star Select as we insert real columns
+		selectedColumns = append(selectedColumns[:starIdx], selectedColumns[starIdx+1:]...)
 		data := document.Data()
 		for key := range data {
 			newCol := &selectColumn{
@@ -102,13 +105,13 @@ func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, select
 				alias:   key,
 				colType: Field,
 			}
-			if len(selectedColumns) == startIdx {
+			if len(selectedColumns) == starIdx {
 				selectedColumns = append(selectedColumns, newCol)
 			} else {
-				selectedColumns = append(selectedColumns[:startIdx+1], selectedColumns[startIdx:]...)
-				selectedColumns[startIdx] = newCol
+				selectedColumns = append(selectedColumns[:starIdx+1], selectedColumns[starIdx:]...)
+				selectedColumns[starIdx] = newCol
 			}
-			startIdx++
+			starIdx++
 		}
 	}
 
@@ -208,6 +211,7 @@ func (sel *SelectStatement) selectFields(fQuery firestore.Query, sQuery *sqlpars
 
 func (sel *SelectStatement) collectSelectFields(columns []*selectColumn) []string {
 	var fields []string
+loop:
 	for _, col := range columns {
 		switch col.colType {
 		case Field:
@@ -220,6 +224,7 @@ func (sel *SelectStatement) collectSelectFields(columns []*selectColumn) []strin
 		case Star:
 			// Don't select fields on firestore.Query to return all fields
 			fields = []string{}
+			break loop
 		}
 	}
 	return fields
