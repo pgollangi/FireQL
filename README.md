@@ -12,7 +12,7 @@ Query Google Firestore database using SQL syntax.
 `FireQL` is a library built on top of the official [Google Firestore Client SDK](https://pkg.go.dev/cloud.google.com/go/firestore) that will allow running queries Cloud Firestore database using SQL syntax. Inspired by [Firebase FireSQL](https://firebaseopensource.com/projects/jsayol/firesql/).
 
 
-[![asciicast](examples/fireql_demo.gif)](https://asciinema.org/a/548756?cols=150&rows=50)
+[![fireql](examples/fireql_help.png)](https://asciinema.org/a/548756?cols=150&rows=50)
 
 ## Usage
 
