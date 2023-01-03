@@ -154,8 +154,8 @@ func TestMain(m *testing.M) {
 				// and capturing the FIRESTORE_EMULATOR_HOST value to set
 				pos := strings.Index(d, FirestoreEmulatorHost+"=")
 				if pos > 0 {
-					host := d[pos+len(FirestoreEmulatorHost)+1 : len(d)-1]
-					os.Setenv(FirestoreEmulatorHost, host)
+					//host := d[pos+len(FirestoreEmulatorHost)+1 : len(d)-1]
+					os.Setenv(FirestoreEmulatorHost, "localhost:8080")
 				}
 			}
 		}
