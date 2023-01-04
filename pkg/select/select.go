@@ -54,6 +54,7 @@ func (sel *SelectStatement) Execute() (*util.QueryResult, error) {
 	}
 	defer fireClient.Close()
 
+	qCollectionName = strings.Trim(qCollectionName, "`")
 	fCollection := fireClient.Collection(qCollectionName)
 	fQuery := fCollection.Query
 
@@ -85,6 +86,8 @@ func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, select
 			columns = append(columns, column.alias)
 		}
 		return &util.QueryResult{Columns: columns, Records: [][]interface{}{}}, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	// Insert COLUMNS for START (*) selection
