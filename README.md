@@ -69,6 +69,7 @@ Read the [documentation](https://pgollangi.github.io/FireQL/) for more informati
 Some cool `SELECT` queries that are possible with `FireQL`:
 ```sql
 select * from users
+select * from `[contacts]` // To query collection group. enclose subcollect name in square brackets.
 select *, id as user_id from users
 select id, email as email_address, `address.city` AS city from `users`
 select * from users order by 'address.city' desc limit 10

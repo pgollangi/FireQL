@@ -36,6 +36,11 @@ var selectTests = []TestExpect{
 		length:  "21",
 	},
 	TestExpect{
+		query:   "select * from `users`",
+		columns: []string{"id", "email", "username", "address", "name"},
+		length:  "21",
+	},
+	TestExpect{
 		query:   "select id as uid, * from users",
 		columns: []string{"uid", "id", "email", "username", "address", "name"},
 		length:  "21",
@@ -97,7 +102,7 @@ func newFirestoreTestClient(ctx context.Context) *firestore.Client {
 
 func TestMain(m *testing.M) {
 	// command to start firestore emulator
-	cmd := exec.Command("gcloud", "beta", "emulators", "firestore", "start", "--host-port=localhost")
+	cmd := exec.Command("gcloud", "beta", "emulators", "firestore", "start", "--host-port=localhost:8765")
 
 	// this makes it killable
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -151,12 +156,6 @@ func TestMain(m *testing.M) {
 					wg.Done()
 				}
 
-				// and capturing the FIRESTORE_EMULATOR_HOST value to set
-				pos := strings.Index(d, FirestoreEmulatorHost+"=")
-				if pos > 0 {
-					host := d[pos+len(FirestoreEmulatorHost)+1 : len(d)-1]
-					os.Setenv(FirestoreEmulatorHost, host)
-				}
 			}
 		}
 	}()
@@ -164,6 +163,7 @@ func TestMain(m *testing.M) {
 	// wait until the running message has been received
 	wg.Wait()
 
+	os.Setenv(FirestoreEmulatorHost, "localhost:8765")
 	ctx := context.Background()
 	users := newFirestoreTestClient(ctx).Collection("users")
 
