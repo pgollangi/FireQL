@@ -36,6 +36,11 @@ var selectTests = []TestExpect{
 		length:  "21",
 	},
 	TestExpect{
+		query:   "select * from `users`",
+		columns: []string{"id", "email", "username", "address", "name"},
+		length:  "21",
+	},
+	TestExpect{
 		query:   "select id as uid, * from users",
 		columns: []string{"uid", "id", "email", "username", "address", "name"},
 		length:  "21",

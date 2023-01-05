@@ -55,8 +55,15 @@ func (sel *SelectStatement) Execute() (*util.QueryResult, error) {
 	defer fireClient.Close()
 
 	qCollectionName = strings.Trim(qCollectionName, "`")
-	fCollection := fireClient.Collection(qCollectionName)
-	fQuery := fCollection.Query
+
+	var fQuery firestore.Query
+	if strings.HasPrefix(qCollectionName, "[") && strings.HasSuffix(qCollectionName, "]") {
+		groupName := strings.TrimPrefix(qCollectionName, "[")
+		groupName = strings.TrimSuffix(groupName, "]")
+		fQuery = fireClient.CollectionGroup(groupName).Query
+	} else {
+		fQuery = fireClient.Collection(qCollectionName).Query
+	}
 
 	fQuery, selectedFields, err := sel.selectFields(fQuery, sQuery)
 	if err != nil {
