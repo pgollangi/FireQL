@@ -153,15 +153,15 @@ func TestMain(m *testing.M) {
 
 				// checking for the message that it's started
 				if strings.Contains(d, "Dev App Server is now running") {
+					// and capturing the FIRESTORE_EMULATOR_HOST value to set
+					pos := strings.Index(d, FirestoreEmulatorHost+"=")
+					if pos > 0 {
+						host := d[pos+len(FirestoreEmulatorHost)+1 : len(d)-1]
+						os.Setenv(FirestoreEmulatorHost, host)
+					}
 					wg.Done()
 				}
 
-				// and capturing the FIRESTORE_EMULATOR_HOST value to set
-				pos := strings.Index(d, FirestoreEmulatorHost+"=")
-				if pos > 0 {
-					host := d[pos+len(FirestoreEmulatorHost)+1 : len(d)-1]
-					os.Setenv(FirestoreEmulatorHost, host)
-				}
 			}
 		}
 	}()
