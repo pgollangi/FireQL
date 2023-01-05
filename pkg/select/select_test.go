@@ -102,7 +102,7 @@ func newFirestoreTestClient(ctx context.Context) *firestore.Client {
 
 func TestMain(m *testing.M) {
 	// command to start firestore emulator
-	cmd := exec.Command("gcloud", "beta", "emulators", "firestore", "start", "--host-port=localhost")
+	cmd := exec.Command("gcloud", "beta", "emulators", "firestore", "start", "--host-port=localhost:8765")
 
 	// this makes it killable
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -153,12 +153,6 @@ func TestMain(m *testing.M) {
 
 				// checking for the message that it's started
 				if strings.Contains(d, "Dev App Server is now running") {
-					// and capturing the FIRESTORE_EMULATOR_HOST value to set
-					pos := strings.Index(d, FirestoreEmulatorHost+"=")
-					if pos > 0 {
-						host := d[pos+len(FirestoreEmulatorHost)+1 : len(d)-1]
-						os.Setenv(FirestoreEmulatorHost, host)
-					}
 					wg.Done()
 				}
 
@@ -169,6 +163,7 @@ func TestMain(m *testing.M) {
 	// wait until the running message has been received
 	wg.Wait()
 
+	os.Setenv(FirestoreEmulatorHost, "localhost:8765")
 	ctx := context.Background()
 	users := newFirestoreTestClient(ctx).Collection("users")
 
