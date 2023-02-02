@@ -2,6 +2,7 @@ package support
 
 import (
 	"fmt"
+	"github.com/Knetic/govaluate"
 	"reflect"
 	"strings"
 )
@@ -55,5 +56,15 @@ func Length(data []interface{}) (result interface{}, err error) {
 			err = fmt.Errorf(`LENGTH of type "%v" is not supported`, e.(*reflect.ValueError).Kind)
 		}
 	}()
-	return reflect.ValueOf(data[0]).Len(), nil
+	return float64(reflect.ValueOf(data[0]).Len()), nil
+}
+
+func GetEvalFunctions() map[string]govaluate.ExpressionFunction {
+	result := map[string]govaluate.ExpressionFunction{}
+	for name, fun := range functions {
+		result[name] = func(args ...interface{}) (interface{}, error) {
+			return fun.function(args)
+		}
+	}
+	return result
 }
