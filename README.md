@@ -77,6 +77,7 @@ select id, email as email_address, `address.city` AS city from `users`
 select * from users order by 'address.city' desc limit 10
 select * from `users` where id > 50
 select id, LENGTH(contacts) as total_contacts from `users`
+select id, (age > 100) as centenarian as total_contacts from `users`
 ```
 See [Wiki](https://github.com/pgollangi/FireQL/wiki) for more examples.
 
@@ -133,6 +134,14 @@ In addition to that:
 - [ ] `GROUP BY` support
 - [ ] Support other DML queries: `INSERT`, `UPDATE`, and `DELETE`
 
+
+## Run
+
+### Tests
+
+```shell
+$ go test ./...
+```
 
 ## Contributing
 Thanks for considering contributing to this project!
