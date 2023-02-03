@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Knetic/govaluate"
 	"github.com/pgollangi/fireql/pkg/support"
 	"github.com/pgollangi/fireql/pkg/util"
 	"github.com/xwb1989/sqlparser"
@@ -185,6 +186,26 @@ func readColumnValue(document *firestore.DocumentSnapshot, data *map[string]inte
 		}
 		val = funcVal
 		break
+	case Expr:
+		evalExpr, err := govaluate.NewEvaluableExpressionWithFunctions(column.field, support.GetEvalFunctions())
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse expression %s while reading: %v", column.field, err)
+		}
+
+		params := map[string]interface{}{}
+		for _, param := range column.params {
+			paramVal, err := readColumnValue(document, data, param)
+			if err != nil {
+				return nil, err
+			}
+			params[param.field] = paramVal
+		}
+
+		exprResult, err := evalExpr.Evaluate(params)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't evauluate expression %s: %v", column.field, err)
+		}
+		return exprResult, err
 	}
 	return val, nil
 }
@@ -195,6 +216,7 @@ const (
 	Field    ColumnType = 0
 	Function            = 1
 	Star                = 2
+	Expr                = 3
 )
 
 type selectColumn struct {
@@ -231,11 +253,16 @@ loop:
 			paramFields := sel.collectSelectFields(col.params)
 			fields = append(fields, paramFields...)
 			break
+		case Expr:
+			exprFields := sel.collectSelectFields(col.params)
+			fields = append(fields, exprFields...)
+			break
 		case Star:
 			// Don't select fields on firestore.Query to return all fields
 			fields = []string{}
 			break loop
 		}
+
 	}
 	return fields
 }
@@ -252,40 +279,62 @@ func (sel *SelectStatement) collectSelectColumns(qSelects sqlparser.SelectExprs)
 			})
 			break
 		case *sqlparser.AliasedExpr:
+			alias := qSelect.As.String()
+			if alias == "" {
+				alias = sqlparser.String(qSelect.Expr)
+			}
 			switch colExpr := qSelect.Expr.(type) {
 			case *sqlparser.ColName:
 				field := colExpr.Name.String()
-				alias := qSelect.As.String()
-				if alias == "" {
-					alias = field
-				}
 				columns = append(columns, &selectColumn{
 					field:   field,
 					alias:   alias,
 					colType: Field,
 				})
 				break
-			case *sqlparser.FuncExpr:
-				name := colExpr.Name.String()
-				alias := qSelect.As.String()
-				if alias == "" {
-					alias = name
-				}
-				params, err := sel.collectSelectColumns(colExpr.Exprs)
+			//case *sqlparser.FuncExpr:
+			//	name := colExpr.Name.String()
+			//	alias := qSelect.As.String()
+			//	if alias == "" {
+			//		alias = name
+			//	}
+			//	params, err := sel.collectSelectColumns(colExpr.Exprs)
+			//	if err != nil {
+			//		return nil, err
+			//	}
+			//	err = support.ValidateFunc(name, params)
+			//	if err != nil {
+			//		return nil, err
+			//	}
+			//	columns = append(columns, &selectColumn{
+			//		field:   name,
+			//		alias:   alias,
+			//		colType: Function,
+			//		params:  params,
+			//	})
+			//	break
+			default:
+				expr := sqlparser.String(qSelect.Expr)
+				evalExpr, err := govaluate.NewEvaluableExpressionWithFunctions(expr, support.GetEvalFunctions())
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("couldn't parse expression %s: %v", expr, err)
 				}
-				err = support.ValidateFunc(name, params)
-				if err != nil {
-					return nil, err
+
+				var fields []*selectColumn
+				for _, token := range evalExpr.Tokens() {
+					if token.Kind == govaluate.VARIABLE {
+						fields = append(fields, &selectColumn{
+							field:   token.Value.(string),
+							colType: Field,
+						})
+					}
 				}
 				columns = append(columns, &selectColumn{
-					field:   name,
+					field:   expr,
 					alias:   alias,
-					colType: Function,
-					params:  params,
+					colType: Expr,
+					params:  fields,
 				})
-				break
 			}
 			break
 		}

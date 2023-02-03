@@ -81,13 +81,19 @@ var selectTests = []TestExpect{
 		query:   "select LENGTH(username) as uLen from users where id = 8",
 		columns: []string{"uLen"},
 		length:  "1",
-		records: [][]interface{}{[]interface{}{6}},
+		records: [][]interface{}{[]interface{}{float64(6)}},
 	},
 	TestExpect{
 		query:   "select id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
 		columns: []string{"id"},
 		length:  "1",
 		records: [][]interface{}{[]interface{}{float64(10)}},
+	},
+	TestExpect{
+		query:   "select id > 0 as has_id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
+		columns: []string{"has_id"},
+		length:  "1",
+		records: [][]interface{}{[]interface{}{true}},
 	},
 }
 
