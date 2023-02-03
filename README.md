@@ -79,6 +79,9 @@ select * from `users` where id > 50
 select id, LENGTH(contacts) as total_contacts from `users`
 select id, (age > 100) as centenarian as total_contacts from `users`
 ```
+
+`FireQL` depend on [govaluate](https://github.com/Knetic/govaluate) to evaluate expressions in `SELECT`. See list of possible expressions and operators [here](https://github.com/Knetic/govaluate/blob/master/MANUAL.md#operators). 
+
 See [Wiki](https://github.com/pgollangi/FireQL/wiki) for more examples.
 
 ### Authentication
