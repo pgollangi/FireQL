@@ -166,9 +166,13 @@ func readColumnValue(document *firestore.DocumentSnapshot, data *map[string]inte
 			var colData interface{}
 			colData = *data
 			for _, fPath := range fieldPaths {
-				colData = colData.(map[string]interface{})[fPath]
-				if colData == nil {
+				fieldVal, ok := colData.(map[string]interface{})[fPath]
+				if !ok {
 					return nil, fmt.Errorf(`unknown field "%s" in doc "%s"`, column.field, document.Ref.ID)
+				}
+				colData = fieldVal
+				if colData == nil {
+					break
 				}
 			}
 			val = colData
