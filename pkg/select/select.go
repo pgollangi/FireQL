@@ -88,7 +88,7 @@ func (sel *SelectStatement) Execute() (*util.QueryResult, error) {
 
 func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, selectedColumns []*selectColumn) (*util.QueryResult, error) {
 	document, err := docs.Next()
-	if err == iterator.Done {
+	if errors.Is(err, iterator.Done) {
 		var columns []string
 		for _, column := range selectedColumns {
 			columns = append(columns, column.alias)
@@ -147,7 +147,7 @@ func (sel *SelectStatement) readResults(docs *firestore.DocumentIterator, select
 			row[idx] = val
 		}
 		document, err = docs.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 	}
