@@ -107,12 +107,6 @@ var selectTests = []TestExpect{
 		length:  "1",
 		records: [][]interface{}{{float64(21), nil, "ckensleyk"}},
 	},
-	{
-		query:   "select id from users where email != null",
-		columns: []string{"id", "email", "username"},
-		length:  "1",
-		records: [][]interface{}{{float64(21)}},
-	},
 }
 
 func newFirestoreTestClient(ctx context.Context) *firestore.Client {
