@@ -159,16 +159,20 @@ func readColumnValue(document *firestore.DocumentSnapshot, data *map[string]inte
 	var val interface{}
 	switch column.colType {
 	case Field:
-		fieldPaths := strings.Split(column.field, ".")
-		var colData interface{}
-		colData = *data
-		for _, fPath := range fieldPaths {
-			colData = colData.(map[string]interface{})[fPath]
-			if colData == nil {
-				return nil, fmt.Errorf(`unknown field "%s" in doc "%s"`, column.field, document.Ref.ID)
+		if column.field == firestore.DocumentID {
+			val = document.Ref.ID
+		} else {
+			fieldPaths := strings.Split(column.field, ".")
+			var colData interface{}
+			colData = *data
+			for _, fPath := range fieldPaths {
+				colData = colData.(map[string]interface{})[fPath]
+				if colData == nil {
+					return nil, fmt.Errorf(`unknown field "%s" in doc "%s"`, column.field, document.Ref.ID)
+				}
 			}
+			val = colData
 		}
-		val = colData
 		break
 	case Function:
 		params := make([]interface{}, len(column.params))
