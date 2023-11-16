@@ -30,88 +30,88 @@ type TestExpect struct {
 const FirestoreEmulatorHost = "FIRESTORE_EMULATOR_HOST"
 
 var selectTests = []TestExpect{
-	//TestExpect{
-	//	query:   "select * from users",
-	//	columns: []string{"id", "email", "username", "address", "name"},
-	//	length:  "21",
-	//},
-	//TestExpect{
-	//	query:   "select * from `users`",
-	//	columns: []string{"id", "email", "username", "address", "name"},
-	//	length:  "21",
-	//},
-	//TestExpect{
-	//	query:   "select id as uid, * from users",
-	//	columns: []string{"uid", "id", "email", "username", "address", "name"},
-	//	length:  "21",
-	//},
-	//TestExpect{
-	//	query:   "select *, username as uname from users",
-	//	columns: []string{"id", "email", "username", "address", "name", "uname"},
-	//	length:  "21",
-	//},
-	//TestExpect{
-	//	query:   "select  id as uid, *, username as uname from users",
-	//	columns: []string{"uid", "id", "email", "username", "address", "name", "uname"},
-	//	length:  "21",
-	//},
-	//TestExpect{
-	//	query:   "select id, email, address from users",
-	//	columns: []string{"id", "email", "address"},
-	//	length:  "21",
-	//},
-	//TestExpect{
-	//	query:   "select id, email, address from users limit 5",
-	//	columns: []string{"id", "email", "address"},
-	//	length:  "5",
-	//},
-	//TestExpect{
-	//	query:   "select id from users where email='aeatockj@psu.edu'",
-	//	columns: []string{"id"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{float64(20)}},
-	//},
-	//TestExpect{
-	//	query:   "select id from users order by id desc limit 1",
-	//	columns: []string{"id"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{float64(21)}},
-	//},
-	//TestExpect{
-	//	query:   "select LENGTH(username) as uLen from users where id = 8",
-	//	columns: []string{"uLen"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{float64(6)}},
-	//},
-	//TestExpect{
-	//	query:   "select id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
-	//	columns: []string{"id"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{float64(10)}},
-	//},
-	//TestExpect{
-	//	query:   "select id > 0 as has_id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
-	//	columns: []string{"has_id"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{true}},
-	//},
-	//TestExpect{
-	//	query:   "select __name__ from users where id = 1",
-	//	columns: []string{"__name__"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{"1"}},
-	//},
-	//TestExpect{
-	//	query:   "select id, email, username from users where id = 21",
-	//	columns: []string{"id", "email", "username"},
-	//	length:  "1",
-	//	records: [][]interface{}{[]interface{}{float64(21), nil, "ckensleyk"}},
-	//},
-	TestExpect{
+	{
+		query:   "select * from users",
+		columns: []string{"id", "email", "username", "address", "name"},
+		length:  "21",
+	},
+	{
+		query:   "select * from `users`",
+		columns: []string{"id", "email", "username", "address", "name"},
+		length:  "21",
+	},
+	{
+		query:   "select id as uid, * from users",
+		columns: []string{"uid", "id", "email", "username", "address", "name"},
+		length:  "21",
+	},
+	{
+		query:   "select *, username as uname from users",
+		columns: []string{"id", "email", "username", "address", "name", "uname"},
+		length:  "21",
+	},
+	{
+		query:   "select  id as uid, *, username as uname from users",
+		columns: []string{"uid", "id", "email", "username", "address", "name", "uname"},
+		length:  "21",
+	},
+	{
+		query:   "select id, email, address from users",
+		columns: []string{"id", "email", "address"},
+		length:  "21",
+	},
+	{
+		query:   "select id, email, address from users limit 5",
+		columns: []string{"id", "email", "address"},
+		length:  "5",
+	},
+	{
+		query:   "select id from users where email='aeatockj@psu.edu'",
+		columns: []string{"id"},
+		length:  "1",
+		records: [][]interface{}{{float64(20)}},
+	},
+	{
+		query:   "select id from users order by id desc limit 1",
+		columns: []string{"id"},
+		length:  "1",
+		records: [][]interface{}{{float64(21)}},
+	},
+	{
+		query:   "select LENGTH(username) as uLen from users where id = 8",
+		columns: []string{"uLen"},
+		length:  "1",
+		records: [][]interface{}{{float64(6)}},
+	},
+	{
+		query:   "select id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
+		columns: []string{"id"},
+		length:  "1",
+		records: [][]interface{}{{float64(10)}},
+	},
+	{
+		query:   "select id > 0 as has_id from users where `address.city` = 'Glendale' and name = 'Eleanora'",
+		columns: []string{"has_id"},
+		length:  "1",
+		records: [][]interface{}{{true}},
+	},
+	{
+		query:   "select __name__ from users where id = 1",
+		columns: []string{"__name__"},
+		length:  "1",
+		records: [][]interface{}{{"1"}},
+	},
+	{
+		query:   "select id, email, username from users where id = 21",
+		columns: []string{"id", "email", "username"},
+		length:  "1",
+		records: [][]interface{}{{float64(21), nil, "ckensleyk"}},
+	},
+	{
 		query:   "select id from users where email != null",
 		columns: []string{"id", "email", "username"},
 		length:  "1",
-		records: [][]interface{}{[]interface{}{float64(21)}},
+		records: [][]interface{}{{float64(21)}},
 	},
 }
 
